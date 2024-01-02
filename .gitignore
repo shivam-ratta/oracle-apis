@@ -1,0 +1,38 @@
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+env/
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Temporary files
+*.bak
+*.swp
+*~
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+
+# Environment variables
+.env
+
+# VS Code specific files
+.vscode/
+*.code-workspace
+
+# Jupyter Notebook specific files
+.ipynb_checkpoints/

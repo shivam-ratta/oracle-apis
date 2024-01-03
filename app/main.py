@@ -1,5 +1,8 @@
 import jwt
+import fitz
+from openai import OpenAI
 from typing import List
+from selenium import webdriver
 from fastapi import FastAPI, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordBearer
 from app.crud import get_user, get_clients, get_companies, get_user_clients, get_articles, get_client_articles
@@ -9,11 +12,17 @@ from app.models.client import Client
 from app.models.company import Company
 from app.models.article import Article
 from app.models.client_article import ClientArticle
+from selenium.webdriver.common.by import By
 
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
 
+
 app = FastAPI()
+
+client = OpenAI(
+    api_key='',
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -76,3 +85,52 @@ def list_articles():
 @app.get("/client_articles", response_model=List[ClientArticle])
 def list_client_articles():
     return get_client_articles()
+
+
+@app.post("/generate-summary")
+async def generate_summary_from_url(payload: dict):
+    # Extract text from the dynamic webpage
+    dynamic_webpage_text = extract_text_from_dynamic_webpage(
+        payload.get('url'))
+
+    # Generate summary using GPT-3.5-turbo
+    summary = generate_summary(dynamic_webpage_text)
+
+    return {"summary": summary}
+
+
+def generate_summary(text):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Provide summary of text"},
+            {"role": "user", "content": text[:3000]}
+        ],
+        max_tokens=300,
+        temperature=0.5
+    )
+    return response.choices[0].message.content
+
+
+def extract_text_from_dynamic_webpage(url):
+    try:
+        # Set up the selenium webdriver (make sure you have the appropriate webdriver executable installed)
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")  # Run in headless mode
+        driver = webdriver.Chrome(options=options)
+
+        # Open the webpage and wait for it to load (adjust wait time based on your needs)
+        driver.get(url)
+        # driver.implicitly_wait(3)
+
+        # Extract text from the dynamic webpage
+        # webpage_text = driver.find_element_by_xpath("/html/body").text
+        webpage_text = driver.find_element(By.XPATH, "/html/body").text
+
+        return webpage_text
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Failed to fetch content from the dynamic webpage: {str(e)}")
+    finally:
+        # Close the webdriver
+        driver.quit()

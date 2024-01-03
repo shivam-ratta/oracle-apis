@@ -9,3 +9,6 @@ python-multipart
 python-dotenv
 oracledb
 pyjwt
+PyMuPDF
+openai
+selenium
